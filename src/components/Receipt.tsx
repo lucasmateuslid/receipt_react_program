@@ -77,7 +77,7 @@ function ReceiptContent({ data, copy }: { data: ReceiptData; copy: '1ª VIA - EM
 
         <div className="grid grid-cols-2 gap-8 pt-8">
           <div className="space-y-2">
-            <img src="../src/components/imgs/assign.png" alt="Signature" className="rotateimg mx-auto h-12 transform"/>
+            <img src="https://github.com/lucasmateuslid/receipt_react_program/blob/main/src/components/imgs/assign.png" alt="Signature" className="rotateimg mx-auto h-12 transform"/>
             <div className="border-b-2 border-gray-300 pb-1"></div>
             <div className="text-center text-sm text-gray-600">
                 <p className="font-medium">Mais Solucoes em Monitoramento LTDA</p>
