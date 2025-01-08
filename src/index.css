@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.rotateimg {
+  transform: rotate(-90deg);
+  scale: 4.5;
+}
