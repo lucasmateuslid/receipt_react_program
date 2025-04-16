@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import InputMask from 'react-input-mask';
 import { Receipt } from 'lucide-react';
 import { ReceiptData, Vehicle, PAYMENT_METHODS, SERVICE_TYPES } from '../types';
 import { formatDocument, formatPlate, generateReceiptNumber } from '../utils';
+import { isValidCPF } from '../utils/validators'; // nova função
 
 interface Props {
   onSubmit: (data: ReceiptData) => void;
@@ -15,13 +17,21 @@ export function ReceiptForm({ onSubmit }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<ReceiptData['paymentMethod']>('PIX');
   const [serviceType, setServiceType] = useState<ReceiptData['serviceType']>('ADHESION');
   const [vehicles, setVehicles] = useState<Vehicle[]>([{ plate: '' }]);
+  const [cpfError, setCpfError] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const cleanDoc = payerDocument.replace(/\D/g, '');
+    if (cleanDoc.length === 11 && !isValidCPF(cleanDoc)) {
+      setCpfError(true);
+      return;
+    }
+
     onSubmit({
       payerDocument,
       payerName,
-      amount: parseFloat(amount),
+      amount: parseFloat(amount.replace(',', '.')),
       dueDate,
       paymentMethod,
       serviceType,
@@ -57,14 +67,18 @@ export function ReceiptForm({ onSubmit }: Props) {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">CPF/CNPJ</label>
-          <input
-            type="text"
+          <InputMask
+            mask={payerDocument.replace(/\D/g, '').length > 11 ? '99.999.999/9999-99' : '999.999.999-99'}
             value={payerDocument}
-            onChange={(e) => setPayerDocument(formatDocument(e.target.value))}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            onChange={(e) => {
+              setPayerDocument(formatDocument(e.target.value));
+              setCpfError(false);
+            }}
+            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${cpfError ? 'border-red-500' : ''}`}
             required
             maxLength={18}
           />
+          {cpfError && <p className="text-red-600 text-sm mt-1">CPF inválido.</p>}
         </div>
 
         <div>
@@ -80,14 +94,13 @@ export function ReceiptForm({ onSubmit }: Props) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Valor (R$)</label>
-          <input
-            type="number"
+          <InputMask
+            mask="99999.99"
+            maskChar={null}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
-            step="0.01"
-            min="0"
           />
         </div>
 
@@ -142,13 +155,13 @@ export function ReceiptForm({ onSubmit }: Props) {
           </div>
           {vehicles.map((vehicle, index) => (
             <div key={index} className="flex space-x-2">
-              <input
-                type="text"
+              <InputMask
+                mask="aaa-9999"
+                maskChar=""
                 value={vehicle.plate}
                 onChange={(e) => handleVehicleChange(index, e.target.value)}
                 placeholder="ABC-1234"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                maxLength={8}
+                className="block w-full uppercase rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />
               {vehicles.length > 1 && (
