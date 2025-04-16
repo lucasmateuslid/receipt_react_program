@@ -37,7 +37,7 @@ function ReceiptContent({ data, copy }: { data: ReceiptData; copy: '1ª VIA - EM
             <p>Avenida Senador Salgado Filho, 1718 BL Tirol Way - Offi</p>
             <p>Natal/RN</p>
             <p>Contato: (84) 4042-0869</p>
-            <p>Banco: CORA</p>
+            <p>Banco: ASAAS</p>
           </div>
         </div>
 
