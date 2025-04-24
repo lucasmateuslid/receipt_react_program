@@ -15,68 +15,60 @@ export default function App() {
 
   const handleDownload = async () => {
     if (!receipt) return;
-    
+
     try {
       setIsDownloading(true);
       const element = document.getElementById('receipt');
-      if (!element) throw new Error('Receipt element not found');
+      if (!element) throw new Error('Elemento do recibo não encontrado');
 
+      // Captura com qualidade
       const canvas = await html2canvas(element, {
-        scale: 1,
-        logging: false,
+        scale: 2, // melhora resolução do PDF
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
       });
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
       });
 
-      // Calculate dimensions
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width / 1; // Manter a proporção em 1
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      // Add company copy
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.addImage(imgData, 'PNG', 0, 20, pdfWidth, pdfHeight, undefined, 'FAST');
+      // Adiciona imagem ao PDF com margem no topo
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
 
-
+      // Salva o arquivo
       pdf.save(`recibo-${receipt.receiptNumber}.pdf`);
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Erro ao gerar PDF:', error);
       alert('Erro ao gerar o PDF. Por favor, tente novamente.');
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const handleEmail = () => {
-    // TODO: Implement email sending
-    console.log('Send Email');
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       {!receipt ? (
         <ReceiptForm onSubmit={handleSubmit} />
       ) : (
         <div className="max-w-4xl mx-auto space-y-6">
-          <Receipt 
+          <Receipt
             data={receipt}
             type="CLIENT"
             onDownload={handleDownload}
-            onEmail={handleEmail}
+            onEmail={() => console.log('Enviar por email')}
             isDownloading={isDownloading}
           />
           <div className="flex justify-center">
             <button
               onClick={() => setReceipt(null)}
-              className="bg-gray-900 text-white py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              className="bg-gray-900 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition"
             >
               Gerar Novo Recibo
             </button>

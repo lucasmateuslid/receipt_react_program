@@ -1,7 +1,8 @@
 import React from 'react';
-import { Receipt as ReceiptIcon, Download, Mail, QrCode, Loader2, Scissors } from 'lucide-react';
+import { Receipt as ReceiptIcon, Download, Mail, Loader2, Scale } from 'lucide-react';
 import { ReceiptData, PAYMENT_METHODS, SERVICE_TYPES } from '../types';
 import { formatCurrency } from '../utils';
+import assignSignature from '../components/imgs/assign.png'; // <-- IMPORTAÇÃO CORRETA DA IMAGEM
 
 interface Props {
   data: ReceiptData;
@@ -14,6 +15,12 @@ interface Props {
 function ReceiptContent({ data, copy }: { data: ReceiptData; copy: '1ª VIA - EMPRESA' | '2ª VIA - PAGADOR' }) {
   const paymentMethod = PAYMENT_METHODS.find(m => m.id === data.paymentMethod)?.label;
   const serviceType = SERVICE_TYPES.find(s => s.id === data.serviceType)?.label;
+
+  const formatLocalDate = (date: string) => {
+    const localDate = new Date(date);
+    localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
+    return localDate.toLocaleDateString('pt-BR');
+  };
 
   return (
     <div className="bg-white p-6 space-y-6">
@@ -37,7 +44,7 @@ function ReceiptContent({ data, copy }: { data: ReceiptData; copy: '1ª VIA - EM
             <p>Avenida Senador Salgado Filho, 1718 BL Tirol Way - Offi</p>
             <p>Natal/RN</p>
             <p>Contato: (84) 4042-0869</p>
-            <p>Banco: CORA</p>
+            <p>Banco: ASAAS</p>
           </div>
         </div>
 
@@ -53,7 +60,7 @@ function ReceiptContent({ data, copy }: { data: ReceiptData; copy: '1ª VIA - EM
           <h3 className="text-sm font-medium text-gray-500">DETALHES DO PAGAMENTO</h3>
           <div className="text-gray-700">
             <p>Valor: {formatCurrency(data.amount)}</p>
-            <p>Data de Vencimento: {new Date(data.dueDate).toLocaleDateString('pt-BR')}</p>
+            <p>Data de Vencimento: {formatLocalDate(data.dueDate)}</p>
             <p>Método de Pagamento: {paymentMethod}</p>
             <p>Tipo de Serviço: {serviceType}</p>
           </div>
@@ -77,10 +84,16 @@ function ReceiptContent({ data, copy }: { data: ReceiptData; copy: '1ª VIA - EM
 
         <div className="grid grid-cols-2 gap-8 pt-8">
           <div className="space-y-2">
-            <img src="https://github.com/lucasmateuslid/receipt_react_program/blob/main/src/components/imgs/assign.png" alt="Signature" className="rotateimg mx-auto h-12 transform"/>
+          <img
+            src={assignSignature}
+            alt="Assinatura"
+            className="mx-auto h-12 object-contain"
+            style={{ transform: 'rotate(270deg) scale(5.5)' }}
+          />
+
             <div className="border-b-2 border-gray-300 pb-1"></div>
             <div className="text-center text-sm text-gray-600">
-                <p className="font-medium">Mais Solucoes em Monitoramento LTDA</p>
+              <p className="font-medium">Mais Solucoes em Monitoramento LTDA</p>
               <p>CNPJ: 41.365.885/0001-00</p>
             </div>
           </div>
