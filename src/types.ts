@@ -7,7 +7,7 @@ export interface ReceiptData {
   payerName: string;
   amount: number;
   dueDate: string;
-  paymentMethod: 'PIX' | 'DEBIT' | 'CREDIT' | 'TRANSFER';
+  paymentMethod: 'PIX' | 'DEBIT' | 'CREDIT' | 'TRANSFER' | 'CASH';
   serviceType: 'ADHESION' | 'MONTHLY' | 'OWNERSHIP_CHANGE' | 'CANCELLATION' | 'SUBSTITUTION';
   vehicles: Vehicle[];
   receiptNumber: string;
@@ -19,6 +19,7 @@ export const PAYMENT_METHODS = [
   { id: 'DEBIT', label: 'Cartão de Débito' },
   { id: 'CREDIT', label: 'Cartão de Crédito' },
   { id: 'TRANSFER', label: 'Transferência Bancária' },
+  { id: 'CASH', label: 'Dinheiro / Espécie' },
 ];
 
 export const SERVICE_TYPES = [
