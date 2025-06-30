@@ -8,7 +8,7 @@ export interface ReceiptData {
   amount: number;
   dueDate: string;
   paymentMethod: 'PIX' | 'DEBIT' | 'CREDIT' | 'TRANSFER' | 'CASH';
-  serviceType: 'ADHESION' | 'MONTHLY' | 'OWNERSHIP_CHANGE' | 'CANCELLATION' | 'SUBSTITUTION';
+  serviceType: 'ADHESION' | 'MONTHLY' | 'OWNERSHIP_CHANGE' | 'CANCELLATION' | 'SUBSTITUTION' | 'REACTIVATION';
   vehicles: Vehicle[];
   receiptNumber: string;
   emissionDate: string;
@@ -27,5 +27,6 @@ export const SERVICE_TYPES = [
   { id: 'MONTHLY', label: 'Mensalidade' },
   { id: 'OWNERSHIP_CHANGE', label: 'Troca de Titularidade' },
   { id: 'CANCELLATION', label: 'Cancelamento' },
-  { id: 'SUBSTITUTION', label: 'Substituição de Veículo' }, // Novo tipo adicionado
+  { id: 'SUBSTITUTION', label: 'Substituição de Veículo' }, 
+  { id: 'REACTIVATION', label: 'Reativação' }, // Novo tipo adicionado
 ];
