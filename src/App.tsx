@@ -93,7 +93,7 @@ export default function App() {
         <div className="max-w-4xl mx-auto space-y-6">
           <Receipt
             data={receipt}
-            type="CLIENT"
+            type="BOTH"
             onDownload={handleDownload}
             onEmail={() => console.log("Enviar por email")}
             isDownloading={isDownloading}
