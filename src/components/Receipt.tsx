@@ -1,146 +1,190 @@
-import React from 'react';
-import { Receipt as ReceiptIcon, Download, Mail, Loader2, Scale } from 'lucide-react';
-import { ReceiptData, PAYMENT_METHODS, SERVICE_TYPES } from '../types';
-import { formatCurrency } from '../utils';
-import assignSignature from '../components/imgs/assign.png'; // <-- IMPORTAÇÃO CORRETA DA IMAGEM
+import React from "react";
+import {
+  Receipt as ReceiptIcon,
+  Download,
+  Mail,
+  Loader2,
+} from "lucide-react";
+
+import { ReceiptData, PAYMENT_METHODS, SERVICE_TYPES } from "../types";
+import { formatCurrency } from "../utils";
+import assignSignature from "../components/imgs/assign.png";
+
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 interface Props {
   data: ReceiptData;
-  type?: 'CLIENT' | 'COMPANY';
+  type?: "CLIENT" | "COMPANY";
   onDownload?: () => void;
   onEmail?: () => void;
   isDownloading?: boolean;
 }
 
-function ReceiptContent({ data, copy }: { data: ReceiptData; copy: '1ª VIA - EMPRESA' | '2ª VIA - PAGADOR' }) {
-  const paymentMethod = PAYMENT_METHODS.find(m => m.id === data.paymentMethod)?.label;
-  const serviceType = SERVICE_TYPES.find(s => s.id === data.serviceType)?.label;
+function ReceiptContent({
+  data,
+  copy,
+}: {
+  data: ReceiptData;
+  copy: "1ª VIA - EMPRESA" | "2ª VIA - PAGADOR" | "RECIBO DE SERVIÇO/PRODUTO";
+}) {
+  const paymentMethod = PAYMENT_METHODS.find((m) => m.id === data.paymentMethod)
+    ?.label;
+  const serviceType = SERVICE_TYPES.find((s) => s.id === data.serviceType)?.label;
 
   const formatLocalDate = (date: string) => {
     const localDate = new Date(date);
     localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
-    return localDate.toLocaleDateString('pt-BR');
+    return localDate.toLocaleDateString("pt-BR");
   };
 
   return (
-    <div className="bg-white p-6 space-y-6">
-      <div className="flex items-center justify-between border-b pb-4">
+    <article className="bg-white p-8 rounded-md shadow-sm border border-gray-200">
+      {/* Header */}
+      <header className="flex items-center justify-between border-b border-gray-300 pb-4 mb-6">
         <div className="flex items-center space-x-3">
-          <ReceiptIcon size={28} className="text-gray-400" />
+          <ReceiptIcon size={30} className="text-gray-500" />
           <div>
-            <h2 className="text-lg font-medium">Recibo Digital</h2>
-            <p className="text-sm text-gray-500">#{data.receiptNumber}</p>
+            <h1 className="text-xl font-semibold text-gray-800">Recibo Digital</h1>
+            <p className="text-sm text-gray-500">Nº {data.receiptNumber}</p>
           </div>
         </div>
-        <div className="text-sm font-medium text-gray-500">{copy}</div>
-      </div>
+        <span className="font-semibold text-sm text-gray-600">{copy}</span>
+      </header>
 
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-500">BENEFICIÁRIO</h3>
-          <div className="text-gray-700">
-            <p className="font-medium">Mais Solucoes em Monitoramento LTDA</p>
-            <p>CNPJ: 41.365.885/0001-00</p>
-            <p>Avenida Senador Salgado Filho, 1718 BL Tirol Way - Offi</p>
-            <p>Natal/RN</p>
-            <p>Contato: (84) 4042-0869</p>
-            <p>Banco: ASAAS</p>
-          </div>
+      {/* Beneficiário */}
+      <section className="mb-6">
+        <Label className="mb-1 block text-gray-700 font-semibold">BENEFICIÁRIO</Label>
+        <address className="not-italic text-gray-700 space-y-1 text-sm">
+          <p className="font-medium">Mais Solucoes em Monitoramento LTDA</p>
+          <p>CNPJ: 41.365.885/0001-00</p>
+          <p>Avenida Senador Salgado Filho, 1718 BL Tirol Way - Offi</p>
+          <p>Natal/RN</p>
+          <p>Contato: (84) 4042-0869</p>
+          <p>Banco: ASAAS</p>
+        </address>
+      </section>
+
+      {/* Pagador */}
+      <section className="mb-6">
+        <Label className="mb-1 block text-gray-700 font-semibold">PAGADOR</Label>
+        <div className="text-gray-700 text-sm space-y-1">
+          <p>Nome: <span className="font-medium">{data.payerName}</span></p>
+          <p>CPF/CNPJ: <span className="font-mono">{data.payerDocument}</span></p>
         </div>
+      </section>
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-500">PAGADOR</h3>
-          <div className="text-gray-700">
-            <p>Nome: {data.payerName}</p>
-            <p>CPF/CNPJ: {data.payerDocument}</p>
+      {/* Detalhes do Pagamento */}
+      <section className="mb-6">
+        <Label className="mb-1 block text-gray-700 font-semibold">DETALHES DO PAGAMENTO</Label>
+        <dl className="text-gray-700 text-sm space-y-1">
+          <div>
+            <dt className="inline font-semibold">Valor: </dt>
+            <dd className="inline">{formatCurrency(data.amount)}</dd>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-500">DETALHES DO PAGAMENTO</h3>
-          <div className="text-gray-700">
-            <p>Valor: {formatCurrency(data.amount)}</p>
-            <p>Data de Vencimento: {formatLocalDate(data.dueDate)}</p>
-            <p>Método de Pagamento: {paymentMethod}</p>
-            <p>Tipo de Serviço: {serviceType}</p>
+          <div>
+            <dt className="inline font-semibold">Data de Vencimento: </dt>
+            <dd className="inline">{formatLocalDate(data.dueDate)}</dd>
           </div>
-        </div>
+          <div>
+            <dt className="inline font-semibold">Método de Pagamento: </dt>
+            <dd className="inline">{paymentMethod}</dd>
+          </div>
+          <div>
+            <dt className="inline font-semibold">Tipo de Serviço: </dt>
+            <dd className="inline">{serviceType}</dd>
+          </div>
+        </dl>
+      </section>
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-500">VEÍCULOS</h3>
-          <ul className="list-disc list-inside text-gray-700">
-            {data.vehicles.map((vehicle, index) => (
-              <li key={index}>Placa: {vehicle.plate}</li>
+      {/* Veículos */}
+      {data.vehicles.length > 0 && (
+        <section className="mb-6">
+          <Label className="mb-1 block text-gray-700 font-semibold">VEÍCULOS</Label>
+          <ul className="list-disc list-inside text-gray-700 text-sm">
+            {data.vehicles.map((vehicle, idx) => (
+              <li key={idx} className="font-mono">
+                Placa: {vehicle.plate}
+              </li>
             ))}
           </ul>
-        </div>
+        </section>
+      )}
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-500">INFORMAÇÕES DO RECIBO</h3>
-          <div className="text-gray-700">
-            <p>Data de Emissão: {new Date(data.emissionDate).toLocaleString('pt-BR')}</p>
-          </div>
-        </div>
+      {/* Informações do Recibo */}
+      <section className="mb-6 text-gray-700 text-sm">
+        <Label className="mb-1 block font-semibold">INFORMAÇÕES DO RECIBO</Label>
+        <p>Data de Emissão: {new Date(data.emissionDate).toLocaleString("pt-BR")}</p>
+      </section>
 
-        <div className="grid grid-cols-2 gap-8 pt-8">
-          <div className="space-y-2">
+      {/* Assinaturas */}
+      <footer className="grid grid-cols-2 gap-12 pt-8 border-t border-gray-300">
+        <div className="flex flex-col items-center space-y-2">
           <img
             src={assignSignature}
             alt="Assinatura"
-            className="mx-auto h-12 object-contain"
-            style={{ transform: 'rotate(270deg) scale(5.5)' }}
+            className="h-16 object-contain rotate-90"
+            style={{ maxWidth: "100px", transform: "rotate(270deg) scale(4.5)" }}
           />
-
-            <div className="border-b-2 border-gray-300 pb-1"></div>
-            <div className="text-center text-sm text-gray-600">
-              <p className="font-medium">Mais Solucoes em Monitoramento LTDA</p>
-              <p>CNPJ: 41.365.885/0001-00</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="border-b-2 border-gray-300 pb-1"></div>
-            <div className="text-center text-sm text-gray-600">
-              <p className="font-medium">{data.payerName}</p>
-              <p>{data.payerDocument}</p>
-            </div>
-          </div>
+          <div className="border-t border-gray-300 w-full"></div>
+          <p className="text-center text-xs text-gray-600 font-semibold">
+            Mais Solucoes em Monitoramento LTDA<br />
+            CNPJ: 41.365.885/0001-00
+          </p>
         </div>
-      </div>
-    </div>
+
+        <div className="flex flex-col items-center space-y-2">
+          <div className="border-t border-gray-300 w-full"></div>
+          <p className="text-center text-xs text-gray-600 font-semibold">
+            {data.payerName}<br />
+            {data.payerDocument}
+          </p>
+        </div>
+      </footer>
+    </article>
   );
 }
 
-export function Receipt({ data, type = 'CLIENT', onDownload, onEmail, isDownloading }: Props) {
+export function Receipt({
+  data,
+  type = "CLIENT",
+  onDownload,
+  onEmail,
+  isDownloading,
+}: Props) {
   return (
-    <div id="receipt" className="max-w-2xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-      <div className="flex justify-end p-4 bg-gray-50 border-b">
+    <section
+      id="receipt"
+      className="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden"
+    >
+      {/* Ações */}
+      <div className="flex justify-end p-4 bg-gray-50 border-b border-gray-200 space-x-2">
         {onDownload && (
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onDownload}
             disabled={isDownloading}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Download PDF"
           >
             {isDownloading ? (
-              <Loader2 size={20} className="animate-spin" />
+              <Loader2 className="animate-spin" />
             ) : (
-              <Download size={20} />
+              <Download />
             )}
-          </button>
+          </Button>
         )}
         {onEmail && (
-          <button
-            onClick={onEmail}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-            title="Enviar por Email"
-          >
-            <Mail size={20} />
-          </button>
+          <Button variant="ghost" size="icon" onClick={onEmail} title="Enviar por Email">
+            <Mail />
+          </Button>
         )}
       </div>
 
-      <ReceiptContent data={data} copy="RECIBO DE SERVIÇO/PRODUTO" />
-
-    </div>
+      <ReceiptContent
+        data={data}
+        copy={type === "CLIENT" ? "RECIBO DE SERVIÇO/PRODUTO" : "1ª VIA - EMPRESA"}
+      />
+    </section>
   );
 }

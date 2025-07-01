@@ -1,14 +1,12 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "node:path"; // ✅ Usa a forma moderna compatível com ESM
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
-  server: {
-    host: '127.0.0.1', // força IPv4 e evita o erro com ::1
-    port: 5174,        // opcional, pode ser 5173 também se quiser testar
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"), // ✅ Usa path nativo corretamente
+    },
   },
 });
