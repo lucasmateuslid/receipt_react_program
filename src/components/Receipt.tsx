@@ -133,7 +133,7 @@ function ReceiptContent({
           </p>
         </div>
 
-        <div className="flex flex-col items-center space-y-2">
+        <div className="flex flex-col items-center space-y-2 mt-16">
           <div className="border-t border-gray-300 w-full"></div>
           <p className="text-center text-xs text-gray-600 font-semibold">
             {data.payerName}<br />
