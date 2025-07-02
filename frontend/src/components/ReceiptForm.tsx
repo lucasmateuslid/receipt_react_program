@@ -299,7 +299,7 @@ export function ReceiptForm({ onSubmit }: Props) {
       </div>
 
       <div>
-        <Label htmlFor="dueDate">Data de Vencimento</Label>
+        <Label htmlFor="dueDate">Data de Vencimento (Adicionar 1 dia ao vencimento, para que fique correto)</Label>
         <Input
           id="dueDate"
           type="date"
