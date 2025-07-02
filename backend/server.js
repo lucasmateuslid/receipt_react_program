@@ -6,11 +6,12 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
 const PORT = 4000;
-
 const FRONTEND_ORIGIN = "http://localhost:5173";
+
+const TOKEN =
+  "6d4a4f574d6452515676375572433143542f522b6536653143304b39356b47355a4b656d6530457845786852536c4f48746558413259566a547a31647856765473416a5845664f4b6f6279573473627a3969322f786a41484f714b576f2f4872307779422f4c78447156553d";
 
 app.use(
   cors({
@@ -23,108 +24,90 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const TOKEN =
-  "35682f316a316e372f6f58695837556d656e7952645531584866584468425179534a5a686c3630636b393138626547326b525a5a2b696b6467686c5a46367149534f6f4c4838346c49615278682b6b4c645343734a544c386f55315977374d68582f794e525047576974303d";
+// Função utilitária para enviar requisições para a RedeVeículos no formato correto
+async function enviarParaRedeVeiculos(endpoint, payload) {
+  // Construindo o body como URL encoded com campo "json" contendo o JSON stringificado
+  const urlencoded = new URLSearchParams();
+  urlencoded.append("json", JSON.stringify(payload));
 
-// Rota proxy para obterDadosVeiculo
-app.post("/obterDadosVeiculo", async (req, res) => {
+  console.log(`Enviando para /${endpoint} o body:`, urlencoded.toString());
+
+  const response = await fetch(
+    `https://integracao.redeveiculos.com/api/v2/prod/${endpoint}/`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: urlencoded.toString(),
+    }
+  );
+
+  let data;
   try {
-    const { chassi = "", placa = "", imei = "", cpfCnpjCliente = "" } = req.body;
+    data = await response.json();
+  } catch (err) {
+    data = { error: true, message: "Resposta da API não está em JSON" };
+  }
 
-    console.log("Recebido em /obterDadosVeiculo:", req.body);
+  return { status: response.status, data };
+}
 
-    if ((!chassi && !placa && !imei) || !cpfCnpjCliente) {
-      console.warn("Faltando chassi/placa/imei ou cpfCnpjCliente");
-      return res.status(400).json({
-        error: "Informe chassi ou placa ou imei, e o cpfCnpjCliente",
-      });
-    }
+// Rota: obterStatusCliente
+app.post("/obterStatusCliente", async (req, res) => {
+  const { cpfCnpjCliente = "" } = req.body;
 
-    const urlencoded = new URLSearchParams();
-    urlencoded.append(
-      "json",
-      JSON.stringify({ chassi, placa, imei, cpfCnpjCliente })
-    );
+  console.log("➡️  /obterStatusCliente:", { cpfCnpjCliente });
 
-    console.log("Corpo enviado para RedeVeículos /obterDadosVeiculo:", urlencoded.toString());
+  if (!cpfCnpjCliente) {
+    return res.status(400).json({ error: "Informe o cpfCnpjCliente" });
+  }
 
-    const response = await fetch(
-      "https://integracao.redeveiculos.com/api/v2/sandbox/obterDadosVeiculo/",
-      {
-        method: "POST",
-        headers: {
-          Authorization: TOKEN,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: urlencoded.toString(),
-      }
-    );
+  try {
+    const { status, data } = await enviarParaRedeVeiculos("obterStatusCliente", {
+      cpfCnpjCliente,
+    });
+    console.log("✅ Resposta /obterStatusCliente:", data);
 
-    console.log("Resposta da API RedeVeículos status:", response.status);
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Erro da API RedeVeículos:", text);
-      return res.status(response.status).json({ error: text });
-    }
-
-    const data = await response.json();
-    console.log("Dados recebidos da API RedeVeículos /obterDadosVeiculo:", data);
-    res.json(data);
+    return res.status(status).json(data);
   } catch (error) {
-    console.error("Erro na requisição para RedeVeículos /obterDadosVeiculo:", error);
-    res.status(500).json({ error: "Erro interno no servidor" });
+    console.error("❌ Erro /obterStatusCliente:", error);
+    return res.status(500).json({ error: "Erro interno no servidor" });
   }
 });
 
-// Rota proxy para obterStatusCliente
-app.post("/obterStatusCliente", async (req, res) => {
+// Rota: obterDadosVeiculo
+app.post("/obterDadosVeiculo", async (req, res) => {
+  let { placa = "", cpfCnpjCliente = "" } = req.body;
+
+  // Remove o hífen da placa e deixa em maiúsculo
+  if (placa) {
+    placa = placa.replace(/-/g, "").toUpperCase();
+  }
+
+  console.log("➡️  /obterDadosVeiculo:", { placa, cpfCnpjCliente });
+
+  if (!placa || !cpfCnpjCliente) {
+    return res
+      .status(400)
+      .json({ error: "Informe placa e cpfCnpjCliente" });
+  }
+
   try {
-    const { cpfCnpjCliente = "" } = req.body;
+    const { status, data } = await enviarParaRedeVeiculos("obterDadosVeiculo", {
+      placa,
+      cpfCnpjCliente,
+    });
 
-    console.log("Recebido em /obterStatusCliente:", req.body);
-
-    if (!cpfCnpjCliente) {
-      console.warn("Faltando cpfCnpjCliente");
-      return res.status(400).json({
-        error: "Informe o cpfCnpjCliente",
-      });
-    }
-
-    const urlencoded = new URLSearchParams();
-    urlencoded.append("json", JSON.stringify({ cpfCnpjCliente }));
-
-    console.log("Corpo enviado para RedeVeículos /obterStatusCliente:", urlencoded.toString());
-
-    const response = await fetch(
-      "https://integracao.redeveiculos.com/api/v2/sandbox/obterStatusCliente/",
-      {
-        method: "POST",
-        headers: {
-          Authorization: TOKEN,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: urlencoded.toString(),
-      }
-    );
-
-    console.log("Resposta da API RedeVeículos status:", response.status);
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Erro da API RedeVeículos:", text);
-      return res.status(response.status).json({ error: text });
-    }
-
-    const data = await response.json();
-    console.log("Dados recebidos da API RedeVeículos /obterStatusCliente:", data);
-    res.json(data);
+    console.log("✅ Resposta /obterDadosVeiculo:", data);
+    return res.status(status).json(data);
   } catch (error) {
-    console.error("Erro na requisição para RedeVeículos /obterStatusCliente:", error);
-    res.status(500).json({ error: "Erro interno no servidor" });
+    console.error("❌ Erro /obterDadosVeiculo:", error);
+    return res.status(500).json({ error: "Erro interno no servidor" });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
