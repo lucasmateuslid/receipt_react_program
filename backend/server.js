@@ -3,18 +3,17 @@ import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
 
-dotenv.config(); // Carrega variáveis do .env
+dotenv.config();
 
 const app = express();
-
-// Porta que o Render vai fornecer dinamicamente
 const PORT = process.env.PORT || 4000;
-
-// Origem permitida (local ou produção)
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
-
-// Token da API Rede Veículos
 const TOKEN = process.env.TOKEN;
+
+// ✅ Permitir múltiplas origens no CORS
+const allowedOrigins = [
+  "http://localhost:5173",                   // desenvolvimento local
+  process.env.FRONTEND_ORIGIN,              // origem definida no Render
+].filter(Boolean); // remove undefined
 
 if (!TOKEN) {
   throw new Error("⚠️ TOKEN da API não definido. Configure a variável de ambiente.");
@@ -22,7 +21,13 @@ if (!TOKEN) {
 
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("⛔ Origem não permitida pelo CORS: " + origin));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -31,6 +36,13 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 🟢 Rota de teste (wake)
+app.get("/wake", (req, res) => {
+  console.log("🔔 API acordada via /wake");
+  res.json({ status: "API INICIADA – AGUARDA ENTRADAS" });
+});
+
+// 🔁 Função auxiliar
 async function enviarParaRedeVeiculos(endpoint, payload) {
   const urlencoded = new URLSearchParams();
   urlencoded.append("json", JSON.stringify(payload));
@@ -59,11 +71,9 @@ async function enviarParaRedeVeiculos(endpoint, payload) {
   return { status: response.status, data };
 }
 
+// 🧾 Rota: Status do cliente
 app.post("/obterStatusCliente", async (req, res) => {
   const { cpfCnpjCliente = "" } = req.body;
-
-  console.log("➡️  /obterStatusCliente:", { cpfCnpjCliente });
-
   if (!cpfCnpjCliente) {
     return res.status(400).json({ error: "Informe o cpfCnpjCliente" });
   }
@@ -79,6 +89,7 @@ app.post("/obterStatusCliente", async (req, res) => {
   }
 });
 
+// 🧾 Rota: Dados do veículo
 app.post("/obterDadosVeiculo", async (req, res) => {
   let { placa = "", cpfCnpjCliente = "" } = req.body;
 
@@ -100,6 +111,9 @@ app.post("/obterDadosVeiculo", async (req, res) => {
   }
 });
 
+// 🟢 Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  const isRender = process.env.RENDER === "true" || process.env.NODE_ENV === "production";
+  const baseURL = isRender ? `https://SEU_DOMINIO.onrender.com` : `http://localhost:${PORT}`;
+  console.log(`🚀 Servidor rodando em: ${baseURL}`);
 });

@@ -4,7 +4,12 @@ import { Receipt } from "./components/Receipt";
 import { ReceiptData } from "./types";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { Switch } from "@/components/ui/switch"; // Pode remover se não usar esse componente
+import { Toaster, toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Moon, Sun, RotateCw, Loader2 } from "lucide-react";
+
+const BACKEND_URL = import.meta.env.VITE_API_URL;
 
 export default function App() {
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
@@ -16,6 +21,8 @@ export default function App() {
     return false;
   });
 
+  const [apiReady, setApiReady] = useState(false);
+
   useEffect(() => {
     const root = window.document.documentElement;
     if (isDarkMode) {
@@ -26,6 +33,31 @@ export default function App() {
       localStorage.setItem("theme", "light");
     }
   }, [isDarkMode]);
+
+  // 🔁 Polling inteligente da API a cada 550ms
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    const wakeApi = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/wake`);
+        const data = await res.json();
+
+        if (data?.status?.includes("API INICIADA")) {
+          setApiReady(true);
+          toast.success("✅ API INICIADA COM SUCESSO");
+          clearInterval(interval); // Para o polling
+        }
+      } catch (err) {
+        // Silencioso — sem erro até a API acordar
+        console.log("🔁 Aguardando API iniciar...");
+      }
+    };
+
+    interval = setInterval(wakeApi, 1000);
+
+    return () => clearInterval(interval); // Limpeza se desmontar
+  }, []);
 
   const handleSubmit = (data: ReceiptData) => {
     setReceipt(data);
@@ -45,12 +77,7 @@ export default function App() {
       });
 
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
@@ -66,49 +93,56 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-background text-foreground transition-colors duration-300">
-      <div className="flex justify-end max-w-4xl mx-auto mb-6">
-        <label htmlFor="dark-mode-toggle" className="flex items-center cursor-pointer select-none">
-          <span className="mr-3 text-sm font-medium">Dark Mode</span>
-          <input
-            id="dark-mode-toggle"
-            type="checkbox"
-            className="hidden"
-            checked={isDarkMode}
-            onChange={() => setIsDarkMode(!isDarkMode)}
-          />
-          <div className="w-10 h-5 bg-gray-300 rounded-full relative transition-colors dark:bg-gray-600">
-            <div
-              className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${
-                isDarkMode ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
+    <>
+      <Toaster position="bottom-right" />
+      <main className="min-h-screen py-6 px-4 bg-background text-foreground transition-colors duration-300 font-sans">
+        {!apiReady ? (
+          <div className="flex flex-col items-center justify-center h-screen gap-4">
+            <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
+            <span className="text-lg font-medium text-muted-foreground">
+              Carregando API...
+            </span>
           </div>
-        </label>
-      </div>
+        ) : (
+          <>
+            {/* Topbar */}
+            <div className="flex justify-between items-center max-w-3xl mx-auto mb-6">
+              <div className="flex items-center gap-2">
+                <Moon className="w-4 h-4 text-muted-foreground" />
+                <Switch checked={isDarkMode} onCheckedChange={setIsDarkMode} />
+                <Sun className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
 
-      {!receipt ? (
-        <ReceiptForm onSubmit={handleSubmit} />
-      ) : (
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Receipt
-            data={receipt}
-            type="BOTH"
-            onDownload={handleDownload}
-            onEmail={() => console.log("Enviar por email")}
-            isDownloading={isDownloading}
-            isGeneratingPdf={true} // Oculta botões para a captura PDF
-          />
-          <div className="flex justify-center">
-            <button
-              onClick={() => setReceipt(null)}
-              className="bg-primary-foreground text-primary py-2 px-4 rounded-lg hover:bg-primary transition"
-            >
-              Gerar Novo Recibo
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+            {/* Conteúdo principal */}
+            {!receipt ? (
+              <ReceiptForm onSubmit={handleSubmit} />
+            ) : (
+              <div className="max-w-3xl mx-auto space-y-6">
+                <Receipt
+                  data={receipt}
+                  type="BOTH"
+                  onDownload={handleDownload}
+                  onEmail={() => console.log("Enviar por email")}
+                  isDownloading={isDownloading}
+                  isGeneratingPdf={true}
+                />
+
+                <div className="flex justify-center">
+                  <Button
+                    variant="default"
+                    onClick={() => setReceipt(null)}
+                    className="flex items-center gap-2 text-base"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                    Gerar Novo Recibo
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </main>
+    </>
   );
 }
